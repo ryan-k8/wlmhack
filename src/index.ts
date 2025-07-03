@@ -1,4 +1,6 @@
 //TODO: setup naming alias '@' for imports in tsconfig.json
+//TODO: fix typing issue for request handlers
+//TODO: add centralized error handling and refactor try catch in controllers
 
 import express, { Request, Response } from 'express';
 import dotenv from 'dotenv';
@@ -42,3 +44,5 @@ try {
 } catch (error) {
   console.error('Error connecting to MongoDB:', error);
 }
+
+export default app;

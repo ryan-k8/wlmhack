@@ -1,7 +1,7 @@
-import express from 'express';
+import { Router } from 'express';
 import { register, login } from '@/controllers/auth';
 
-const router = express.Router();
+const router = Router();
 
 enum ROUTER_URL {
   REGISTER = '/register',
