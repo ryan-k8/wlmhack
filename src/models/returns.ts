@@ -3,6 +3,7 @@ import { Schema, model, Document } from 'mongoose';
 export interface ReturnRequestDocument extends Document {
   userId: string; // Who requested the return
   orderId: string; // Which order
+  partnerId: { type: String; required: true }; // Who sold the item
   itemId: string; // Which item in the order
   reason?: string;
   condition: 'new' | 'used' | 'damaged';
@@ -16,6 +17,7 @@ const returnRequestSchema = new Schema<ReturnRequestDocument>(
   {
     userId: { type: String, required: true },
     orderId: { type: String, required: true },
+    partnerId: { type: String, required: true },
     itemId: { type: String, required: true },
     reason: { type: String },
     condition: { type: String, enum: ['new', 'used', 'damaged'], required: true },

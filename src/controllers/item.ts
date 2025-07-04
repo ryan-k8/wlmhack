@@ -3,9 +3,11 @@ import Item from '@/models/item';
 
 // Create item
 export const createItem = async (req: Request, res: Response) => {
+  const partnerId = req.user?.id; // get from token
   const { name, description, price, qty } = req.body;
+
   try {
-    const item = new Item({ name, description, price, qty });
+    const item = new Item({ name, description, price, qty, partnerId });
     await item.save();
     res.status(201).json(item);
   } catch (err) {
@@ -36,7 +38,9 @@ export const getItem = async (req: Request, res: Response) => {
 // Update item
 export const updateItem = async (req: Request, res: Response) => {
   try {
-    const item = await Item.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    const updateData = { ...req.body };
+    delete updateData.qty; // qty should only change through order logic
+    const item = await Item.findByIdAndUpdate(req.params.id, updateData, { new: true });
     if (!item) return res.status(404).json({ error: 'Item not found' });
     res.json(item);
   } catch (err) {

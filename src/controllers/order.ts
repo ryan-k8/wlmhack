@@ -1,12 +1,38 @@
 import { Request, Response } from 'express';
 import Order from '@/models/order';
+import Item from '@/models/item';
 
 // Place new order
 export const placeOrder = async (req: Request, res: Response) => {
   const userId = req.user?.id;
-  const { items } = req.body;
+  const { items } = req.body; // items: [{ itemId, qty }]
+
   try {
-    const order = new Order({ userId, items, status: 'placed' });
+    const orderItems = [];
+
+    for (const reqItem of items) {
+      const itemDoc = await Item.findById(reqItem.itemId);
+      if (!itemDoc) {
+        return res.status(404).json({ error: `Item not found: ${reqItem.itemId}` });
+      }
+      if (itemDoc.qty < reqItem.qty) {
+        return res
+          .status(400)
+          .json({ error: `Not enough stock for item: ${itemDoc.name}` });
+      }
+      // Reduce stock
+      itemDoc.qty -= reqItem.qty;
+      await itemDoc.save();
+
+      orderItems.push({
+        itemId: itemDoc._id,
+        partnerId: itemDoc.partnerId,
+        qty: reqItem.qty,
+        priceAtPurchase: itemDoc.price,
+      });
+    }
+
+    const order = new Order({ userId, items: orderItems, status: 'placed' });
     await order.save();
     res.status(201).json(order);
   } catch (err) {

@@ -1,4 +1,3 @@
-//TODO: setup naming alias '@' for imports in tsconfig.json
 //TODO: fix typing issue for request handlers
 //TODO: add centralized error handling and refactor try catch in controllers
 

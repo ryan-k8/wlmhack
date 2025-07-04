@@ -17,9 +17,10 @@ const orderSchema = new Schema<OrderDocument>(
     userId: { type: String, required: true },
     items: [
       {
-        itemId: { type: String, required: true },
-        qty: { type: Number, required: true },
-        priceAtPurchase: { type: Number, required: true },
+        itemId: String,
+        partnerId: String, // who sold this item
+        qty: Number,
+        priceAtPurchase: Number,
       },
     ],
     status: {

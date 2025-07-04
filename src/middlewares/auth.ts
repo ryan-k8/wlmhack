@@ -35,7 +35,9 @@ export const authMiddleware = async (
 export const withRole = (role: Array<USER_ROLE>) => {
   return (req: Request, res: Response, next: NextFunction): void => {
     if (!role.includes((req as AuthRequest).user?.role)) {
-      res.status(403).json({ error: 'Forbidden' });
+      res.status(403).json({
+        error: 'Forbidden. ONLY ' + role.join(', ') + ' can access this resource.',
+      });
       return;
     }
     next();

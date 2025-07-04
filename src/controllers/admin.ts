@@ -1,16 +1,15 @@
 import { Request, Response } from 'express';
-import bcrypt from 'bcrypt';
 import User from '@/models/user';
 
 // Create new user (admin can set role)
 export const createUser = async (req: Request, res: Response) => {
   const { name, email, password, role } = req.body;
   try {
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const user = new User({ name, email, password: hashedPassword, role });
+    const user = new User({ name, email, password: password, role });
     await user.save();
     res.status(201).json(user);
   } catch (err) {
+    console.log(err);
     res.status(500).json({ error: 'Failed to create user' });
   }
 };

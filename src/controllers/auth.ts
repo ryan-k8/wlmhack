@@ -36,10 +36,12 @@ export const login = async (req: Request, res: Response) => {
   const { email, password }: LoginDto = req.body;
 
   try {
+    console.log('Login attempt:', { email });
     const user = await User.findOne({ email });
     if (!user) return res.status(400).json({ error: 'Invalid credentials' });
 
     const isMatch = await comparePassword(password, user.password);
+    console.log('Password match:', isMatch);
 
     if (!isMatch) return res.status(400).json({ error: 'Invalid credentials' });
 
@@ -51,6 +53,7 @@ export const login = async (req: Request, res: Response) => {
 
     res.json({ token });
   } catch (err) {
+    console.log(err);
     res.status(500).json({ error: 'Login failed' });
   }
 };

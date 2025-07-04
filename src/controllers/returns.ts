@@ -1,5 +1,7 @@
 import { Request, Response } from 'express';
 import ReturnRequest from '@/models/returns';
+import Order from '@/models/order';
+import Item from '@/models/item';
 
 // Create new return request (customer)
 export const createReturn = async (req: Request, res: Response) => {
@@ -7,10 +9,30 @@ export const createReturn = async (req: Request, res: Response) => {
   const { orderId, itemId, reason, condition } = req.body;
 
   try {
+    const order = await Order.findOne({ _id: orderId, userId });
+    if (!order) {
+      return res
+        .status(404)
+        .json({ error: 'Order not found or does not belong to user' });
+    }
+
+    const orderItem = order.items.find((item) => item.itemId.toString() === itemId);
+    if (!orderItem) {
+      return res.status(400).json({ error: 'Item not found in order' });
+    }
+
+    // fetch item to get partnerId
+    const item = await Item.findById(itemId);
+    console.log('Item found:', item);
+    if (!item) {
+      return res.status(404).json({ error: 'Item not found in DB' });
+    }
+
     const rr = new ReturnRequest({
       userId,
       orderId,
       itemId,
+      partnerId: item.partnerId,
       reason,
       condition,
       status: 'pending',
@@ -19,7 +41,6 @@ export const createReturn = async (req: Request, res: Response) => {
     res.status(201).json(rr);
   } catch (err) {
     console.log(err);
-
     res.status(500).json({ error: 'Failed to create return request' });
   }
 };
@@ -55,6 +76,14 @@ export const approveReturn = async (req: Request, res: Response) => {
       { new: true },
     );
     if (!rr) return res.status(404).json({ error: 'Return request not found' });
+
+    // Increase item qty back
+    const item = await Item.findById(rr.itemId);
+    if (item) {
+      item.qty += 1;
+      await item.save();
+    }
+
     res.json(rr);
   } catch (err) {
     res.status(500).json({ error: 'Failed to approve return request' });
