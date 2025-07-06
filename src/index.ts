@@ -1,4 +1,3 @@
-//TODO: fix typing issue for request handlers
 //TODO: add centralized error handling and refactor try catch in controllers
 
 import express, { Request, Response } from 'express';
