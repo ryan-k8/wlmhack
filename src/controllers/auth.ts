@@ -17,7 +17,7 @@ type LoginDto = {
 };
 
 // Register controller
-export const register = async (req: Request, res: Response) => {
+export const register: RequestHandler<{}, {}, RegisterDto> = async (req, res) => {
   const { name, email, password, role }: RegisterDto = req.body;
 
   try {
@@ -31,19 +31,26 @@ export const register = async (req: Request, res: Response) => {
   }
 };
 
-// Login controller
-export const login = async (req: Request, res: Response) => {
-  const { email, password }: LoginDto = req.body;
+import { RequestHandler } from 'express';
+
+export const login: RequestHandler<{}, {}, LoginDto> = async (req, res) => {
+  const { email, password } = req.body;
 
   try {
     console.log('Login attempt:', { email });
     const user = await User.findOne({ email });
-    if (!user) return res.status(400).json({ error: 'Invalid credentials' });
+    if (!user) {
+      res.status(400).json({ error: 'Invalid credentials' });
+      return;
+    }
 
     const isMatch = await comparePassword(password, user.password);
     console.log('Password match:', isMatch);
 
-    if (!isMatch) return res.status(400).json({ error: 'Invalid credentials' });
+    if (!isMatch) {
+      res.status(400).json({ error: 'Invalid credentials' });
+      return;
+    }
 
     const token = jwt.sign(
       { id: user._id, role: user.role },
@@ -55,5 +62,6 @@ export const login = async (req: Request, res: Response) => {
   } catch (err) {
     console.log(err);
     res.status(500).json({ error: 'Login failed' });
+    return;
   }
 };

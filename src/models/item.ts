@@ -6,7 +6,7 @@ export interface ItemDocument extends Document {
   price: number;
   status: 'active' | 'inactive';
   partnerId: { type: String; required: true }; // who owns/sells it
-  qty: { type: Number; default: 0 }; // current stock
+  qty: number; // current stock
   createdAt: Date;
   updatedAt: Date;
 }

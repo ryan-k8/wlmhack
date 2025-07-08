@@ -1,34 +1,43 @@
-//TODO: fix typing issue for request handlers
-//TODO: add centralized error handling and refactor try catch in controllers
+//TODO: migrate the controllers logic to new approach
 
-import express, { Request, Response } from 'express';
+import express, { NextFunction, Request, Response } from 'express';
 import dotenv from 'dotenv';
 dotenv.config();
 
 import morgan from 'morgan';
+import mongoose from 'mongoose';
 
 import routes from './routes/index';
-
-import mongoose from 'mongoose';
-import { authMiddleware } from './middlewares/auth';
+import { wrapRouter } from './utils/router';
+import { asyncHandler, errorHandler } from './middlewares/req';
+import { ApiError } from './utils/error';
 
 const app = express();
 app.use(express.json());
 app.use(morgan('dev'));
 
 // Use the routes defined in the routes directory
-app.use('/api', routes);
+app.use('/api', wrapRouter(routes, asyncHandler));
 
-app.get('/', (req: Request, res: Response) => {
-  res.send('Hello, TypeScript + Express + MongoDB!');
-});
+app.use(
+  '/error-test',
+  asyncHandler(
+    async (
+      req: Request<{}, {}, { statusCode: number | undefined }>,
+      res: Response,
+      next: NextFunction,
+    ) => {
+      let { statusCode } = req.body;
+      if (!statusCode) {
+        statusCode = 500; // Default to 500 if no status code is provided
+      }
+      next(new ApiError(statusCode, 'This is a test error', false));
+    },
+  ),
+);
 
-app.get('/protected', authMiddleware, (req: Request, res: Response) => {
-  res.json({
-    message: 'This is a protected route',
-    user: (req as any).user || 'No user data available',
-  });
-});
+//central error handling middleware
+app.use(errorHandler);
 
 // Start the server
 const PORT = process.env.PORT || 3000;
