@@ -10,7 +10,6 @@ enum ROUTER_URL {
 
 router.post(ROUTER_URL.REGISTER, register);
 
-//@ts-ignore
 router.post(ROUTER_URL.LOGIN, login);
 
 export default router;
