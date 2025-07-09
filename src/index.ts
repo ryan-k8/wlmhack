@@ -1,4 +1,4 @@
-//TODO: migrate the controllers logic to new approach
+//TODO: check if refactoring the controller broke anything
 
 import express, { NextFunction, Request, Response } from 'express';
 import dotenv from 'dotenv';
