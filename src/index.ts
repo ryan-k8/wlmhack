@@ -2,6 +2,7 @@
 
 import express, { NextFunction, Request, Response } from 'express';
 import dotenv from 'dotenv';
+import cors from 'cors';
 dotenv.config();
 
 import morgan from 'morgan';
@@ -13,6 +14,7 @@ import { asyncHandler, errorHandler } from './middlewares/req';
 import { ApiError } from './utils/error';
 
 const app = express();
+app.use(cors());
 app.use(express.json());
 app.use(morgan('dev'));
 
