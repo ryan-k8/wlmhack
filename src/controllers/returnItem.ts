@@ -1,7 +1,6 @@
 import { RequestHandler } from 'express';
 import ReturnedItem from '@/models/returnItem';
 import { ApiError } from '@/utils/error';
-import { USER_ROLE } from '@/middlewares/auth';
 
 // List all available returned items (for partners/admin)
 export const listAvailableReturnedItems: RequestHandler = async (req, res) => {
