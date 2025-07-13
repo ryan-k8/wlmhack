@@ -1,6 +1,7 @@
 import { Schema, model, Document } from 'mongoose';
 
-export interface ItemDocument extends Document {
+// IItemDocument is intentional (prefix interfaces with I)
+export interface IItemDocument extends Document {
   name: string;
   description?: string;
   price: number;
@@ -11,7 +12,7 @@ export interface ItemDocument extends Document {
   updatedAt: Date;
 }
 
-const itemSchema = new Schema<ItemDocument>(
+const itemSchema = new Schema<IItemDocument>(
   {
     name: { type: String, required: true },
     description: { type: String },
@@ -23,4 +24,4 @@ const itemSchema = new Schema<ItemDocument>(
   { timestamps: true },
 );
 
-export default model<ItemDocument>('Item', itemSchema);
+export default model<IItemDocument>('Item', itemSchema);

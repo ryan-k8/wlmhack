@@ -2,7 +2,7 @@ import mongoose, { Schema, Document } from 'mongoose';
 
 import { hashPassword } from '@/utils/jwt';
 
-export interface IUser extends Document {
+export interface IUserDocument extends Document {
   name: string;
   email: string;
   password: string;
@@ -11,6 +11,10 @@ export interface IUser extends Document {
     type: 'Point';
     coordinates: [number, number]; // [longitude, latitude]
   };
+  notifications: {
+    message: string; // Short notification message
+    read: boolean; // Read status
+  }[];
 }
 
 const UserSchema: Schema = new Schema({
@@ -29,13 +33,22 @@ const UserSchema: Schema = new Schema({
       default: [0, 0],
     },
   },
+  notifications: [
+    {
+      message: { type: String, required: true },
+      read: { type: Boolean, default: false },
+    },
+  ],
 });
 
-UserSchema.pre<IUser>('save', async function (next) {
+// Ensure 2dsphere index for geospatial queries
+UserSchema.index({ location: '2dsphere' });
+
+UserSchema.pre<IUserDocument>('save', async function (next) {
   if (this.isModified('password')) {
     this.password = await hashPassword(this.password);
   }
   next();
 });
 
-export default mongoose.model<IUser>('User', UserSchema);
+export default mongoose.model<IUserDocument>('User', UserSchema);

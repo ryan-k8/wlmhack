@@ -1,6 +1,6 @@
 import { Schema, model, Document } from 'mongoose';
 
-export interface ReturnRequestDocument extends Document {
+export interface IReturnRequestDocument extends Document {
   userId: string; // Who requested the return
   orderId: string; // Which order
   partnerId: { type: String; required: true }; // Who sold the item
@@ -13,7 +13,7 @@ export interface ReturnRequestDocument extends Document {
   updatedAt: Date;
 }
 
-const returnRequestSchema = new Schema<ReturnRequestDocument>(
+const returnRequestSchema = new Schema<IReturnRequestDocument>(
   {
     userId: { type: String, required: true },
     orderId: { type: String, required: true },
@@ -31,4 +31,4 @@ const returnRequestSchema = new Schema<ReturnRequestDocument>(
   { timestamps: true },
 );
 
-export default model<ReturnRequestDocument>('ReturnRequest', returnRequestSchema);
+export default model<IReturnRequestDocument>('ReturnRequest', returnRequestSchema);

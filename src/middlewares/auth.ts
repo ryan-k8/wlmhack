@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 
-interface AuthRequest extends Request {
+interface IAuthRequest extends Request {
   user?: any;
 }
 
@@ -25,7 +25,7 @@ export const authMiddleware = async (
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret');
 
-    (req as AuthRequest).user = decoded;
+    (req as IAuthRequest).user = decoded;
     next();
   } catch (err) {
     res.status(401).json({ error: 'Invalid token' });
@@ -34,7 +34,7 @@ export const authMiddleware = async (
 
 export const withRole = (role: Array<USER_ROLE>) => {
   return (req: Request, res: Response, next: NextFunction): void => {
-    if (!role.includes((req as AuthRequest).user?.role)) {
+    if (!role.includes((req as IAuthRequest).user?.role)) {
       res.status(403).json({
         error: 'Forbidden. ONLY ' + role.join(', ') + ' can access this resource.',
       });

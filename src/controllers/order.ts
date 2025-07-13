@@ -2,6 +2,7 @@ import { RequestHandler } from 'express';
 import Order from '@/models/order';
 import Item from '@/models/item';
 import { ApiError } from '@/utils/error';
+import ReturnItem from '@/models/returnItem';
 
 type OrderItemDto = {
   itemId: string;
@@ -19,7 +20,17 @@ export const placeOrder: RequestHandler<{}, {}, PlaceOrderDto> = async (req, res
 
   const orderItems = [];
   for (const reqItem of items) {
-    const itemDoc = await Item.findById(reqItem.itemId);
+    let itemDoc = await Item.findById(reqItem.itemId);
+    let isReturnedItem = false;
+
+    // If not found in normal items, check if it's a returned item
+    if (!itemDoc) {
+      itemDoc = await ReturnItem.findById(reqItem.itemId);
+      if (itemDoc) {
+        isReturnedItem = true;
+      }
+    }
+
     if (!itemDoc) {
       throw new ApiError(404, `Item not found: ${reqItem.itemId}`);
     }
@@ -33,6 +44,7 @@ export const placeOrder: RequestHandler<{}, {}, PlaceOrderDto> = async (req, res
       partnerId: itemDoc.partnerId,
       qty: reqItem.qty,
       priceAtPurchase: itemDoc.price,
+      isReturnedItem, // new metadata
     });
   }
   const order = new Order({ userId, items: orderItems, status: 'placed' });

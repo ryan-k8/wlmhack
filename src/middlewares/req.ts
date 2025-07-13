@@ -26,12 +26,16 @@ export const errorHandler = (
     stack = err.stack ?? '';
   }
 
-  res.status(statusCode).json({
+  const errorResponse = {
     success: false,
     message,
     url: req.originalUrl,
     method: req.method,
     timestamp: new Date().toISOString(),
     stack,
-  });
+  };
+
+  console.log(errorResponse);
+
+  res.status(statusCode).json(errorResponse);
 };

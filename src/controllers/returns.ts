@@ -2,7 +2,12 @@ import { RequestHandler } from 'express';
 import ReturnRequest from '@/models/returns';
 import Order from '@/models/order';
 import Item from '@/models/item';
+import User from '@/models/user';
 import { ApiError } from '@/utils/error';
+
+import { matchingService } from '@/services/matching';
+import { pricingService } from '@/services/pricing';
+import ReturnedItem from '@/models/returnItem'; // Import the ReturnedItem model
 
 type CreateReturnDto = {
   orderId: string;
@@ -61,20 +66,65 @@ export const approveReturn: RequestHandler<{ id: string }, {}, ApproveReturnDto>
   res,
 ) => {
   const { refundAmount } = req.body;
+
+  // 1. Mark the return as approved in the database
   const rr = await ReturnRequest.findByIdAndUpdate(
     req.params.id,
     { status: 'approved', refundAmount },
     { new: true },
   );
-  if (!rr) throw new ApiError(404, 'Return request not found');
-
-  const item = await Item.findById(rr.itemId);
-  if (item) {
-    item.qty += 1; // Assuming 1 item is returned
-    await item.save();
+  if (!rr) {
+    throw new ApiError(404, 'Return request not found');
   }
 
-  res.json(rr);
+  // 2. Use PricingService to get the resale price
+  const resalePrice = await pricingService.suggestResalePrice(rr.itemId, rr.condition);
+  if (!resalePrice) {
+    throw new ApiError(500, 'Failed to calculate resale price');
+  }
+
+  const { refundId } = await pricingService.createRefund(rr.userId, refundAmount);
+
+  // 3. Use MatchingService to find nearby partners
+  const nearbyPartners = await matchingService.findPartnersNearby(
+    { coordinates: [0, 0] }, // Replace with actual location if available
+    10, // Max distance in km
+  );
+
+  // Notify nearby partners if any are found
+  if (nearbyPartners && nearbyPartners.length > 0) {
+    for (const partner of nearbyPartners) {
+      const partnerUser = await User.findById(partner.partnerId);
+      if (partnerUser) {
+        partnerUser.notifications.push({
+          message: `A returned item is available for resale. Item ID: ${rr.itemId}`,
+          read: false,
+        });
+        await partnerUser.save();
+      }
+    }
+  }
+
+  // 4. Create a ReturnedItem record with resale price and matching data
+  const returnedItem = new ReturnedItem({
+    returnRequestId: rr._id,
+    approvedResalePrice: resalePrice,
+    status: 'available',
+    location: {
+      type: 'Point',
+      coordinates: [0, 0], // Replace with actual location if available
+    },
+  });
+  await returnedItem.save();
+
+  // Respond with the updated return request and additional details
+  res.json({
+    returnRequest: rr,
+    resalePrice,
+    nearbyPartners: nearbyPartners || [], // Return an empty array if no partners are found
+    refundId: refundId,
+    returnedItemId: returnedItem._id,
+  });
 };
 
 // Reject return request (partner/admin)
