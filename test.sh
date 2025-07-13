@@ -7,6 +7,8 @@ PARTNER_EMAIL="partner@example.com"
 PARTNER_PASS="password123"
 CUSTOMER_EMAIL="customer@example.com"
 CUSTOMER_PASS="password123"
+CUSTOMER2_EMAIL="customer2@example.com"
+CUSTOMER2_PASS="password123"
 
 echo "== 1. Login as admin =="
 ADMIN_TOKEN=$(curl -s -X POST "$API_URL/auth/login" \
@@ -40,6 +42,17 @@ if [ "$CUSTOMER_TOKEN" == "null" ] || [ -z "$CUSTOMER_TOKEN" ]; then
   exit 1
 fi
 echo "Customer Token: $CUSTOMER_TOKEN"
+
+echo "== 3b. Login as second customer (customer2) =="
+CUSTOMER2_TOKEN=$(curl -s -X POST "$API_URL/auth/login" \
+ -H "Content-Type: application/json" \
+ -d "{\"email\":\"$CUSTOMER2_EMAIL\",\"password\":\"$CUSTOMER2_PASS\"}" | jq -r .token)
+
+if [ "$CUSTOMER2_TOKEN" == "null" ] || [ -z "$CUSTOMER2_TOKEN" ]; then
+  echo "Customer2 login failed"
+  exit 1
+fi
+echo "Customer2 Token: $CUSTOMER2_TOKEN"
 
 echo "== 4. Partner creates an item =="
 ITEM_ID=$(curl -s -X POST "$API_URL/items" \
@@ -95,7 +108,7 @@ APPROVE=$(curl -s -X PUT "$API_URL/returns/$RETURN_ID/approve" \
  -H "Content-Type: application/json" \
  -d '{"refundAmount":100}')
 
-APPROVE_STATUS=$(echo "$APPROVE" | jq -r .status)
+APPROVE_STATUS=$(echo "$APPROVE" | jq -r .returnRequest.status)
 
 if [ "$APPROVE_STATUS" == "null" ] || [ -z "$APPROVE_STATUS" ]; then
   echo "Approve failed"
@@ -103,4 +116,46 @@ if [ "$APPROVE_STATUS" == "null" ] || [ -z "$APPROVE_STATUS" ]; then
 fi
 echo "Approve status: $APPROVE_STATUS"
 
-echo "== DONE ✅ =="
+echo "== 9. Partner claims the returned item =="
+RETURNED_ITEM_ID=$(echo "$APPROVE" | jq -r .returnedItemId)
+
+if [ "$RETURNED_ITEM_ID" == "null" ] || [ -z "$RETURNED_ITEM_ID" ]; then
+  echo "ReturnedItemId not found in approve response"
+  exit 1
+fi
+echo "Returned Item ID: $RETURNED_ITEM_ID"
+
+CLAIMED_ITEM=$(curl -s -X PUT "$API_URL/return-items/$RETURNED_ITEM_ID/claim" \
+ -H "Authorization: Bearer $PARTNER_TOKEN")
+
+CLAIMED_STATUS=$(echo "$CLAIMED_ITEM" | jq -r .status)
+if [ "$CLAIMED_STATUS" != "claimed" ]; then
+  echo "Claiming returned item failed"
+  exit 1
+fi
+echo "Claimed item status: $CLAIMED_STATUS"
+
+echo "== 10. Customer lists claimed returned items =="
+CLAIMED_LIST=$(curl -s -X GET "$API_URL/return-items/claimed")
+CLAIMED_LIST_ID=$(echo "$CLAIMED_LIST" | jq -r '.[0]._id')
+
+if [ "$CLAIMED_LIST_ID" == "null" ] || [ -z "$CLAIMED_LIST_ID" ]; then
+  echo "No claimed returned items found"
+  exit 1
+fi
+echo "Customer sees claimed returned item: $CLAIMED_LIST_ID"
+
+echo "== 11. Customer2 buys the claimed returned item =="
+ORDER_RETURNED=$(curl -s -X POST "$API_URL/orders" \
+ -H "Authorization: Bearer $CUSTOMER2_TOKEN" \
+ -H "Content-Type: application/json" \
+ -d "{\"items\":[{\"itemId\":\"$CLAIMED_LIST_ID\",\"qty\":1}]}")
+
+ORDER_RETURNED_ID=$(echo "$ORDER_RETURNED" | jq -r ._id)
+if [ "$ORDER_RETURNED_ID" == "null" ] || [ -z "$ORDER_RETURNED_ID" ]; then
+  echo "Customer2 failed to buy claimed returned item"
+  exit 1
+fi
+echo "Customer2 bought returned item, order ID: $ORDER_RETURNED_ID"
+
+echo "== ALL RETURN FLOW TESTS PASSED ✅ =="

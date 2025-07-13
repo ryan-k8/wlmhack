@@ -29,4 +29,9 @@ curl -X POST "$API_URL/auth/register" \
   -H "Content-Type: application/json" \
   -d '{"name":"Customer","email":"customer@example.com","password":"password123","role":"customer"}'
 
+echo "== 5. Create second customer user =="
+curl -X POST "$API_URL/auth/register" \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Customer2","email":"customer2@example.com","password":"password123","role":"customer"}'
+
 echo "== ✅ All users created! =="
