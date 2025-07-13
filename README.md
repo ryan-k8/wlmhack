@@ -22,20 +22,37 @@ run with `npm run dev` ('@' alias points to 'src')
 
 # Running Test Script.
 
+### for dropping mongodb database if required.
+
+```bash
+❯ docker exec -it local-mongo sh
+# mongosh -u root -p secret
+test> show databases
+test> use test
+test> db.dropDatabase()
+```
+
 ### **before_test.sh**
 
-- Sets up initial test data in the database, such as creating admin, partner, and customer users with known credentials.
+- Sets up initial test data:
+  - Creates admin user
+  - Creates partner user
+  - Creates first customer user
+  - Creates second customer user (who will later buy the returned item)
 
 ### **test.sh**
 
-- Logs in as admin, partner, and customer to obtain tokens.
+- Logs in as admin, partner, customer1, and customer2 to obtain tokens.
 - Partner creates a new item.
-- Customer places an order for that item.
+- Customer1 places an order for that item.
 - Partner ships the order.
-- Customer requests a return for the order.
+- Customer1 requests a return.
 - Partner approves the return and processes the refund.
+- Partner claims the returned item.
+- Customer1 lists claimed returned items.
+- Customer2 buys the claimed returned item.
 
-this flow tests the full lifecycle: user authentication, item creation, ordering, shipping, return request, and return approval/refund.
+This flow tests the full lifecycle: user authentication, item creation, ordering, shipping, return request, approval/refund, partner claiming, and resale to another customer.
 
 run `chmod +x before_test.sh && ./before_test.sh`
 <br/>
