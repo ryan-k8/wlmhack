@@ -50,3 +50,12 @@
 - `PUT    /api/returns/:id/reject` — Reject return (admin/partner)
 
 ---
+
+### **Return Items**
+
+- `GET    /api/return-items/available` — List available returned items (partners/admin)
+- `GET    /api/return-items/claimed` — List claimed returned items (customers can buy)
+- `GET    /api/return-items/:id` — Get single returned item by ID (partners/admin)
+- `PUT    /api/return-items/:id/claim` — Claim a returned item (partners/admin)
+
+---
