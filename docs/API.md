@@ -49,6 +49,24 @@
 - `PUT    /api/returns/:id/approve` — Approve return (admin/partner)
 - `PUT    /api/returns/:id/reject` — Reject return (admin/partner)
 
+Possible Breaking change: `PUT /api/returns/:id/approve` now returns:
+
+```
+{
+  "returnRequest": { "_id": "...", "status": "approved" },
+  "returnedItemId": "..."
+}
+```
+
+instead of
+
+```
+{
+  "status": "approved",
+  ...
+}
+```
+
 ---
 
 ### **Return Items**
